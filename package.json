@@ -1,0 +1,30 @@
+{
+  "name": "tibo-grafplot",
+  "version": "1.0.0",
+  "description": "Module standalone de génération de graphiques avec formes géométriques (rond, barres, losange) positionnées sur une échelle dynamique",
+  "main": "index.js",
+  "scripts": {
+    "test": "node examples/basic.js",
+    "example": "node examples/basic.js"
+  },
+  "keywords": [
+    "chart",
+    "graph",
+    "canvas",
+    "png",
+    "visualization",
+    "data-visualization"
+  ],
+  "author": "Thibaud Bouillie",
+  "license": "MIT",
+  "dependencies": {
+    "canvas": "^2.11.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  }
+}
