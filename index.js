@@ -16,6 +16,7 @@ const path = require('path')
 const DEFAULT_CONFIG = {
   width: 620,
   height: 28,
+  barWidth: 4,
   colors: {
     background: '#FFFFFF',
     rond: '#f7c948',
@@ -102,7 +103,7 @@ function drawBarre(ctx, x, barHeight, barWidth, couleur, yOffset = 0) {
  * Rend le graphique sur le canvas
  */
 function renderCanvas(canvas, data, config) {
-  const { width, height, colors, zIndex } = config
+  const { width, height, barWidth, colors, zIndex } = config
   const ctx = canvas.getContext('2d')
 
   // 1. Normalisation des valeurs
@@ -140,7 +141,6 @@ function renderCanvas(canvas, data, config) {
   let x_barre1 = getXPosition(valeurs.barre1)
   let x_barre2 = getXPosition(valeurs.barre2)
 
-  const barWidth = 4
   const radius = height / 2 - 1
   const losangeSize = height - 2
 
@@ -281,6 +281,7 @@ async function tiboGrafplot(options = {}) {
   const config = {
     width: options.width ?? DEFAULT_CONFIG.width,
     height: options.height ?? DEFAULT_CONFIG.height,
+    barWidth: options.barWidth ?? DEFAULT_CONFIG.barWidth,
     colors: { ...DEFAULT_CONFIG.colors, ...options.colors },
     zIndex: { ...DEFAULT_CONFIG.zIndex, ...options.zIndex },
   }
