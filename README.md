@@ -5,12 +5,10 @@ Module Node.js standalone pour la generation de graphiques avec formes geometriq
 ## Installation
 
 ```bash
-npm install tibo-grafplot
-```
+# Depuis GitHub
+npm install github:acetibo/tibo-grafplot
 
-Ou en copiant le dossier dans votre projet :
-
-```bash
+# Ou en copiant le dossier
 cp -r tibo-grafplot/ mon-projet/node_modules/
 ```
 
@@ -19,7 +17,7 @@ cp -r tibo-grafplot/ mon-projet/node_modules/
 ```javascript
 const tiboGrafplot = require('tibo-grafplot')
 
-// Generer un graphique et obtenir un Buffer PNG
+// Generer un graphique (Buffer PNG par defaut)
 const buffer = await tiboGrafplot({
   rond: 45.5,
   barre1: 67.2,
@@ -28,10 +26,6 @@ const buffer = await tiboGrafplot({
   mini: 0,
   maxi: 100
 })
-
-// Enregistrer le buffer dans un fichier
-const fs = require('fs').promises
-await fs.writeFile('graphique.png', buffer)
 ```
 
 ## API
@@ -40,7 +34,7 @@ await fs.writeFile('graphique.png', buffer)
 
 Fonction principale de generation.
 
-#### Parametres requis (valeurs)
+#### Parametres (valeurs)
 
 | Parametre | Type | Description |
 |-----------|------|-------------|
@@ -51,16 +45,34 @@ Fonction principale de generation.
 | `mini` | `number` | Valeur minimum de l'echelle (defaut: 0) |
 | `maxi` | `number` | Valeur maximum de l'echelle (defaut: 100) |
 
-#### Parametres optionnels (configuration)
+#### Parametres (configuration)
 
 | Parametre | Type | Defaut | Description |
 |-----------|------|--------|-------------|
-| `width` | `number` | 620 | Largeur du graphique en pixels |
-| `height` | `number` | 28 | Hauteur du graphique en pixels |
+| `width` | `number` | 620 | Largeur en pixels |
+| `height` | `number` | 28 | Hauteur en pixels |
+| `barWidth` | `number` | 4 | Epaisseur des barres en pixels |
 | `colors` | `object` | voir ci-dessous | Couleurs personnalisees |
 | `zIndex` | `object` | voir ci-dessous | Ordre de superposition |
-| `output` | `string` | 'buffer' | Type de sortie: 'buffer', 'base64', 'file' |
-| `filePath` | `string` | - | Chemin du fichier (requis si output='file') |
+
+#### Parametres (sortie)
+
+| Parametre | Type | Defaut | Description |
+|-----------|------|--------|-------------|
+| `output` | `string` | `'buffer'` | Type de sortie (voir ci-dessous) |
+| `filePath` | `string` | - | Chemin du fichier (si output='file') |
+| `jpegQuality` | `number` | 0.9 | Qualite JPEG (0 a 1) |
+
+#### Types de sortie (output)
+
+| Valeur | Description | Retour |
+|--------|-------------|--------|
+| `'buffer'` ou `'png'` | Buffer PNG | `Buffer` |
+| `'base64'` ou `'png-base64'` | PNG en base64 | `string` (data:image/png;base64,...) |
+| `'jpeg'` ou `'jpg'` | Buffer JPEG | `Buffer` |
+| `'jpeg-base64'` ou `'jpg-base64'` | JPEG en base64 | `string` |
+| `'svg'` | SVG vectoriel | `string` (XML) |
+| `'file'` | Fichier (auto-detecte le format) | `object` |
 
 #### Couleurs par defaut
 
@@ -78,51 +90,43 @@ Fonction principale de generation.
 
 ```javascript
 {
-  rond: 1,      // Dessine en premier (arriere-plan)
+  rond: 1,      // Arriere-plan
   losange: 2,
   barre1: 3,
-  barre2: 4     // Dessine en dernier (premier plan)
+  barre2: 4     // Premier plan
 }
 ```
 
-### Methodes raccourcies
+## Comportement special : Barres egales
 
-```javascript
-const { toBuffer, toBase64, toFile } = require('tibo-grafplot')
-
-// Retourne un Buffer PNG
-const buffer = await toBuffer({ rond: 50, barre1: 75, mini: 0, maxi: 100 })
-
-// Retourne une Data URL base64
-const dataUrl = await toBase64({ rond: 50, barre1: 75, mini: 0, maxi: 100 })
-
-// Enregistre dans un fichier et retourne les metadonnees
-const result = await toFile({
-  rond: 50,
-  barre1: 75,
-  mini: 0,
-  maxi: 100,
-  filePath: './output/graphique.png'
-})
-```
+Quand `barre1 === barre2` (egalite stricte), les barres sont **empilees verticalement** a la meme position, chacune faisant la moitie de la hauteur.
 
 ## Exemples
 
-### Graphique simple
+### Formats de sortie
 
 ```javascript
-const tiboGrafplot = require('tibo-grafplot')
+// PNG (defaut)
+const png = await tiboGrafplot({ rond: 50, barre1: 70, mini: 0, maxi: 100 })
 
-const buffer = await tiboGrafplot({
-  rond: 45,
-  barre1: 67,
-  barre2: 52,
-  mini: 0,
-  maxi: 100
-})
+// JPEG
+const jpeg = await tiboGrafplot({ ...data, output: 'jpeg' })
+
+// JPEG basse qualite
+const jpegLight = await tiboGrafplot({ ...data, output: 'jpeg', jpegQuality: 0.5 })
+
+// SVG (le plus leger)
+const svg = await tiboGrafplot({ ...data, output: 'svg' })
+
+// Base64 pour HTML inline
+const base64 = await tiboGrafplot({ ...data, output: 'base64' })
+
+// Fichier (auto-detecte le format selon l'extension)
+await tiboGrafplot({ ...data, output: 'file', filePath: './graph.png' })
+await tiboGrafplot({ ...data, output: 'file', filePath: './graph.svg' })
 ```
 
-### Avec couleurs personnalisees
+### Personnalisation
 
 ```javascript
 const buffer = await tiboGrafplot({
@@ -132,6 +136,9 @@ const buffer = await tiboGrafplot({
   losange: 38,
   mini: 0,
   maxi: 100,
+  width: 400,
+  height: 32,
+  barWidth: 6,
   colors: {
     background: '#f0f0f0',
     rond: '#2196F3',
@@ -142,110 +149,88 @@ const buffer = await tiboGrafplot({
 })
 ```
 
-### Dimensions personnalisees
+## Integration Express/Pug
 
-```javascript
-const buffer = await tiboGrafplot({
-  rond: 45,
-  barre1: 67,
-  mini: 0,
-  maxi: 100,
-  width: 400,
-  height: 20
-})
-```
-
-### Pour affichage inline (base64)
-
-```javascript
-const { toBase64 } = require('tibo-grafplot')
-
-const dataUrl = await toBase64({
-  rond: 45,
-  barre1: 67,
-  mini: 0,
-  maxi: 100
-})
-
-// Utilisation dans HTML/Pug
-// <img src="${dataUrl}" alt="Graphique" />
-```
-
-### Enregistrement dans un fichier
-
-```javascript
-const { toFile } = require('tibo-grafplot')
-
-const result = await toFile({
-  rond: 45,
-  barre1: 67,
-  barre2: 52,
-  losange: 38,
-  mini: 0,
-  maxi: 100,
-  filePath: './public/images/mon-graphique.png'
-})
-
-console.log(result)
-// {
-//   filename: 'mon-graphique.png',
-//   path: './public/images/mon-graphique.png',
-//   size: 1234,
-//   width: 620,
-//   height: 28
-// }
-```
-
-## Utilisation avec Express/Pug
-
-### Helper pour Pug
+### Methode 1 : Middleware avec helpers Pug
 
 ```javascript
 // app.js
+const { pugHelpers } = require('tibo-grafplot/express')
+
+app.use(pugHelpers({
+  defaultConfig: { width: 500, height: 24 }
+}))
+```
+
+```pug
+//- Dans un template Pug
+img(src=await grafplot({ rond: 50, barre1: 70, mini: 0, maxi: 100 }))
+
+//- SVG inline
+!= await grafplotSvg({ rond: 50, barre1: 70, mini: 0, maxi: 100 })
+```
+
+### Methode 2 : Route API
+
+```javascript
+// app.js
+const { createRoute } = require('tibo-grafplot/express')
+
+app.use('/grafplot', createRoute())
+```
+
+```html
+<!-- Appel via URL -->
+<img src="/grafplot?rond=50&barre1=70&mini=0&maxi=100&format=png" />
+<img src="/grafplot?rond=50&barre1=70&format=svg" />
+```
+
+### Methode 3 : Generation dans le controller
+
+```javascript
+// controller
 const tiboGrafplot = require('tibo-grafplot')
 
-app.locals.tiboGrafplot = async (options) => {
-  return await tiboGrafplot.toBase64(options)
+exports.showReport = async (req, res) => {
+  const data = await getDataFromDB(req.params.id)
+
+  const graphBase64 = await tiboGrafplot({
+    ...data,
+    output: 'base64'
+  })
+
+  res.render('report', { graphBase64 })
 }
 ```
 
-### Dans un template Pug
-
 ```pug
-//- views/graphique.pug
-- const graphUrl = await tiboGrafplot({ rond: 45, barre1: 67, mini: 0, maxi: 100 })
-img(src=graphUrl alt="Graphique")
+//- views/report.pug
+img(src=graphBase64 alt="Graphique")
 ```
 
-**Note** : Pug ne supporte pas nativement les fonctions async. Voir la section "Integration Express" pour une solution.
+## Publipostage
 
-### Integration Express (recommandee)
+Pour generer des documents HTML personnalises avec graphiques :
 
 ```javascript
-// routes/graphique.js
-const express = require('express')
-const tiboGrafplot = require('tibo-grafplot')
-const router = express.Router()
+const { generateForMailing, generateBatch } = require('tibo-grafplot/express')
 
-router.get('/graphique/:id', async (req, res) => {
-  // Recuperer les donnees depuis la BDD ou autre
-  const data = { rond: 45, barre1: 67, barre2: 52, mini: 0, maxi: 100 }
+// Un seul graphique avec tous les formats
+const graph = await generateForMailing({ rond: 50, barre1: 70, mini: 0, maxi: 100 })
+// graph.base64 -> pour <img src="...">
+// graph.svg -> pour SVG inline
+// graph.imgTag -> <img src="data:..." /> pret a l'emploi
 
-  // Generer le graphique
-  const buffer = await tiboGrafplot(data)
-
-  // Envoyer l'image
-  res.set('Content-Type', 'image/png')
-  res.send(buffer)
-})
-
-module.exports = router
+// Batch de graphiques
+const graphs = await generateBatch([
+  { id: 'graph1', rond: 50, barre1: 70, mini: 0, maxi: 100 },
+  { id: 'graph2', rond: 30, barre1: 60, mini: 0, maxi: 100 },
+])
+// graphs['graph1'].base64
+// graphs['graph2'].svg
 ```
 
-```pug
-//- views/page.pug
-img(src="/graphique/123" alt="Graphique")
-```
+Voir `examples/publipostage.js` pour des exemples complets.
 
 ## Valeurs speciales
 
@@ -258,6 +243,7 @@ Les valeurs suivantes sont traitees comme `null` (non affichees) :
 ## Dependances
 
 - `canvas` >= 2.11.2
+- `express` (optionnel, pour les helpers Express)
 
 ## License
 
