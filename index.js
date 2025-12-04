@@ -86,10 +86,16 @@ function drawCercle(ctx, x, y, radius, couleur) {
 
 /**
  * Dessine une barre verticale sur le canvas
+ * @param {CanvasRenderingContext2D} ctx - Contexte du canvas
+ * @param {number} x - Position X
+ * @param {number} barHeight - Hauteur de la barre
+ * @param {number} barWidth - Largeur de la barre
+ * @param {string} couleur - Couleur de la barre
+ * @param {number} yOffset - Décalage vertical (0 = haut, défaut)
  */
-function drawBarre(ctx, x, height, width, couleur) {
+function drawBarre(ctx, x, barHeight, barWidth, couleur, yOffset = 0) {
   ctx.fillStyle = couleur
-  ctx.fillRect(x - width / 2, 0, width, height)
+  ctx.fillRect(x - barWidth / 2, yOffset, barWidth, barHeight)
 }
 
 /**
@@ -138,9 +144,14 @@ function renderCanvas(canvas, data, config) {
   const radius = height / 2 - 1
   const losangeSize = height - 2
 
-  // Gestion des collisions entre barres
+  // Détection de l'égalité stricte des valeurs des barres
+  const barresEgales = valeurs.barre1 !== null &&
+                       valeurs.barre2 !== null &&
+                       valeurs.barre1 === valeurs.barre2
+
+  // Gestion des collisions entre barres (sauf si égalité stricte -> empilées)
   const minDistance = barWidth
-  if (x_barre1 !== null && x_barre2 !== null) {
+  if (x_barre1 !== null && x_barre2 !== null && !barresEgales) {
     let distance = Math.abs(x_barre1 - x_barre2)
     if (distance < minDistance) {
       const center = (x_barre1 + x_barre2) / 2
@@ -203,17 +214,31 @@ function renderCanvas(canvas, data, config) {
       draw: () => drawLosange(ctx, x_losange, height / 2, losangeSize, colors.losange),
     })
   }
-  if (x_barre1 !== null) {
+  // Barres : empilées si égalité stricte, sinon normales
+  if (barresEgales) {
+    // Barres empilées : chacune fait la moitié de la hauteur
+    const halfHeight = height / 2
     drawables.push({
       z: zIndex.barre1,
-      draw: () => drawBarre(ctx, x_barre1, height, barWidth, colors.barre1),
+      draw: () => drawBarre(ctx, x_barre1, halfHeight, barWidth, colors.barre1, 0),
     })
-  }
-  if (x_barre2 !== null) {
     drawables.push({
       z: zIndex.barre2,
-      draw: () => drawBarre(ctx, x_barre2, height, barWidth, colors.barre2),
+      draw: () => drawBarre(ctx, x_barre2, halfHeight, barWidth, colors.barre2, halfHeight),
     })
+  } else {
+    if (x_barre1 !== null) {
+      drawables.push({
+        z: zIndex.barre1,
+        draw: () => drawBarre(ctx, x_barre1, height, barWidth, colors.barre1, 0),
+      })
+    }
+    if (x_barre2 !== null) {
+      drawables.push({
+        z: zIndex.barre2,
+        draw: () => drawBarre(ctx, x_barre2, height, barWidth, colors.barre2, 0),
+      })
+    }
   }
 
   drawables.sort((a, b) => a.z - b.z)
